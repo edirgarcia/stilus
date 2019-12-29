@@ -1,0 +1,7 @@
+name: mido
+channels:
+  - anaconda-fusion
+  - defaults
+  - conda-forge
+prefix: C:\Users\edirg\Anaconda3\envs\mido
+
