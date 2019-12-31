@@ -3,5 +3,8 @@ channels:
   - anaconda-fusion
   - defaults
   - conda-forge
+dependencies:
+  - pip:
+    - mido==1.2.9
 prefix: C:\Users\edirg\Anaconda3\envs\mido
 
