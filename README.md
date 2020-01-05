@@ -13,4 +13,4 @@ How to use:
 
 
 Oh no I've effed up my project:
-reset your repo (git checkout *.*)
+reset your repo (git checkout \*.\*)
