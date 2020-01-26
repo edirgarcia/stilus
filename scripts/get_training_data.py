@@ -23,4 +23,5 @@ for root, dirs, files in os.walk(path):
             result = np.vstack((result, training_data))
 
 print(result.shape)
+np.save("../training_data", result)
 
