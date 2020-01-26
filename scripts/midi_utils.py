@@ -1,4 +1,5 @@
 import random
+import math
 import numpy as np
 from mido import Message, MidiFile, MidiTrack
 
@@ -6,15 +7,15 @@ def get_total_beats(mid):
     max_ticks = 0
     for i, track in enumerate(mid.tracks):
         total_ticks = 0
-        print('Track {}: {}'.format(i, track.name))
+        #print('Track {}: {}'.format(i, track.name))
         for msg in track:
             if msg.type == "note_on" :
                 total_ticks = total_ticks + msg.time
         if total_ticks> max_ticks:
            max_ticks = total_ticks 
-        print("total ticks:" , total_ticks)
+        #print("total ticks:" , total_ticks)
     print("max ticks: ", max_ticks)
-    total_beats = int(max_ticks / mid.ticks_per_beat)
+    total_beats = math.ceil(max_ticks / mid.ticks_per_beat)
     return total_beats
 
 
@@ -26,7 +27,7 @@ def get_total_beats(mid):
 ### returns, tensor - the tensor that processed the whole midi only on the tracks that have note_on events
 def convert_midi_to_tensor(mid, max_sim_notes, max_granularity):
     total_beats = get_total_beats(mid)
-    tensor = np.zeros((len(mid.tracks), total_beats * max_granularity, max_sim_notes))
+    tensor = np.zeros((len(mid.tracks), total_beats * max_granularity , max_sim_notes))
     note_on_dims = []
     for i, track in enumerate(mid.tracks):
             total_ticks = 0
