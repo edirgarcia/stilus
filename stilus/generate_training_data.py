@@ -1,4 +1,4 @@
-from midi_utils import convert_midi_to_time_series, get_training_data 
+from midi.utils import convert_midi_to_time_series, get_training_data 
 from mido import Message, MidiFile, MidiTrack
 import os
 import numpy as np
