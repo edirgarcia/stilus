@@ -3,7 +3,7 @@ from mido import Message, MidiFile, MidiTrack
 import os
 import numpy as np
 
-path = "../midi/training/"
+path = "../midi/test/"
 result = None
 
 for root, dirs, files in os.walk(path):
@@ -23,5 +23,5 @@ for root, dirs, files in os.walk(path):
             result = np.vstack((result, training_data))
 
 print(result.shape)
-np.save("../training_data", result)
+np.save("../test_data", result)
 

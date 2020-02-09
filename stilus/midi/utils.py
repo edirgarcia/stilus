@@ -69,7 +69,7 @@ def convert_midi_to_time_series(mid, max_sim_notes, max_sim_notes_per_track, max
     all_tracks = np.concatenate(tensor[:], axis=1)
     all_tracks.sort(axis=1)
     concat_len = len(all_tracks[0])
-    return  all_tracks[:,concat_len - max_sim_notes :concat_len]
+    return  all_tracks[:,concat_len - max_sim_notes : concat_len]
 
 def get_training_data(time_series, record_size):
     result = np.zeros((len(time_series)+1 - record_size, time_series.shape[1], record_size))
