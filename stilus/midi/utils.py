@@ -14,7 +14,7 @@ def get_total_beats(mid):
         if total_ticks> max_ticks:
            max_ticks = total_ticks 
         #print("total ticks:" , total_ticks)
-    print("max ticks: ", max_ticks)
+    #print("max ticks: ", max_ticks)
     total_beats = math.ceil(max_ticks / mid.ticks_per_beat)
     return total_beats
 
@@ -56,6 +56,22 @@ def convert_midi_to_tensor(mid, max_sim_notes, max_granularity):
     #print ("time series shape:", tensor.shape)
     return tensor[note_on_dims]
 
+def delete_all_note_on(mid):
+    for i, track in enumerate(mid.tracks):
+        j = 0
+        while (j < len(track)) :
+            if track[j].type == "note_on":
+                del track[j]
+            else:
+                j+=1
+    return mid
+
+# Replaces all the note_on events with events from a tensor representation
+def convert_tensor_to_midi(original_mid, tensor):
+    original_mid = delete_all_note_on(original_mid)
+    ### To be implemented
+    return None
+
 
 ### params #mid is is the midi file, 
 ### max_sim_notes is the maximum amount of simultaneous notes on all tracks, as of now most pieces have at most 6
@@ -71,9 +87,10 @@ def convert_midi_to_time_series(mid, max_sim_notes, max_sim_notes_per_track, max
     concat_len = len(all_tracks[0])
     return  all_tracks[:,concat_len - max_sim_notes : concat_len]
 
+### Generates records of size record_size, from the complete timeseries of a midi
 def get_training_data(time_series, record_size):
     result = np.zeros((len(time_series)+1 - record_size, time_series.shape[1], record_size))
-    print(result.shape)
+    #print(result.shape)
     idx = 0
     time_series_len = len(time_series)
     while idx <= time_series_len - record_size:
