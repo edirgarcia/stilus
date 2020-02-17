@@ -5,6 +5,7 @@ import os
 import numpy as np
 
 # <your_path>\Source\Repos\stilus> python stilus/generate_training_data.py midi/test/ test_data
+#                                  python stilus/generate_training_data.py midi/training/ training_data
 
 print("Generating training data...")
 if len(argv) != 3:
