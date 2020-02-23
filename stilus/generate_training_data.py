@@ -12,6 +12,8 @@ if len(argv) != 3:
     raise ValueError("This script must have 2 parameters inputPath, and outputPath")
 
 script_name, in_path, out_path = argv
+# in_path = "../midi/training/"
+# out_path = "../training_data"
 
 result = None
 

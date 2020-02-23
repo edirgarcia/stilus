@@ -27,7 +27,7 @@ def get_total_beats(mid):
 ### returns, tensor - the tensor that processed the whole midi only on the tracks that have note_on events
 def convert_midi_to_tensor(mid, max_sim_notes, max_granularity):
     total_beats = get_total_beats(mid)
-    tensor = np.zeros((len(mid.tracks), total_beats * max_granularity , max_sim_notes))
+    tensor = np.zeros((len(mid.tracks), max_sim_notes, total_beats * max_granularity))
     note_on_dims = []
     for i, track in enumerate(mid.tracks):
             total_ticks = 0
@@ -48,7 +48,7 @@ def convert_midi_to_tensor(mid, max_sim_notes, max_granularity):
                         else:
                             secondary_index = 0
                         prev_index = curr_index
-                        tensor[i, curr_index, secondary_index] = msg.note
+                        tensor[i, secondary_index, curr_index ] = msg.note
                         #print(curr_index, secondary_index)
             
             if note_on_in_track :
@@ -82,18 +82,17 @@ def convert_tensor_to_midi(original_mid, tensor):
 ### returns, time_series - the tensor thatrepresents the sorted notes on all tracks, per time step
 def convert_midi_to_time_series(mid, max_sim_notes, max_sim_notes_per_track, max_granularity) :
     tensor = convert_midi_to_tensor(mid, max_sim_notes_per_track, max_granularity)
+    #print(tensor.shape)
     all_tracks = np.concatenate(tensor[:], axis=1)
-    all_tracks.sort(axis=1)
-    concat_len = len(all_tracks[0])
-    return  all_tracks[:,concat_len - max_sim_notes : concat_len]
+    return  all_tracks
 
 ### Generates records of size record_size, from the complete timeseries of a midi
 def get_training_data(time_series, record_size):
-    result = np.zeros((len(time_series)+1 - record_size, time_series.shape[1], record_size))
+    result = np.zeros((time_series.shape[1]+1 - record_size, time_series.shape[0], record_size))
     #print(result.shape)
     idx = 0
-    time_series_len = len(time_series)
+    time_series_len = time_series.shape[1]
     while idx <= time_series_len - record_size:
-        result[idx] = time_series[idx:idx+record_size].T
+        result[idx] = time_series[:,idx:idx+record_size]
         idx = idx + 1
     return result
