@@ -2,6 +2,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
+import pytorch_lightning as pl
+
+from stilus.data.sets import MidiDataset
+from torch.utils.data import DataLoader
+
 
 def num_flat_features(x):
     size = x.size()[1:]  # all dimensions except the batch dimension
@@ -10,11 +16,69 @@ def num_flat_features(x):
         num_features *= s
     return num_features
 
-class ConvNet_1_0_0(nn.Module):
+class AbstractMidiNet(pl.LightningModule):
+
+    def __init__(self):
+        super(AbstractMidiNet, self).__init__()
+        # Calls super. Body is implemented in each concrete model class
+        self.criterion = nn.L1Loss()
+        self.midi_dataset = MidiDataset("training_data.npy")
+        self.midi_test_dataset = MidiDataset("test_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
+        self.val_test_dataset = MidiDataset("validation_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
+
+    def forward(self, x):
+        # Is implemented in each concrete model class
+        pass
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = self.criterion(y_hat, y)
+        return {'loss': loss}
+
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = self.criterion(y_hat, y)
+        return {'test_loss': loss}
+
+    def test_end(self, outputs):
+        test_loss_mean = torch.stack([x['test_loss'] for x in outputs]).mean()
+        return {'test_loss': test_loss_mean}
+
+    # def validation_step(self, batch, batch_idx):
+    #     x, y = batch
+    #     y_hat = self.forward(x)
+    #     loss = self.criterion(y_hat, y)
+    #     return {'val_loss': loss}
+    
+    # def validation_end(self, outputs):
+    #     val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
+    #     return {'val_loss': val_loss_mean}
+
+    def configure_optimizers(self):
+        return optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
+
+    @pl.data_loader
+    def train_dataloader(self):
+        return DataLoader(self.midi_dataset, batch_size=128, shuffle=True)
+
+    @pl.data_loader
+    def test_dataloader(self):
+        return DataLoader(self.midi_test_dataset, batch_size=128, shuffle=True)
+
+    @pl.data_loader
+    def val_dataloader(self):
+        return DataLoader(self.val_test_dataset, batch_size=64, shuffle=False)
+
+    
+
+class ConvNet_1_0_0(AbstractMidiNet):
+
     def __init__(self):
         super(ConvNet_1_0_0, self).__init__()
-        self.conv1 = nn.Conv1d(5, 10, 4 ) # n * 5 * (28)
-        self.conv2 = nn.Conv1d(10, 10, 4) #n * 10 * (24)
+        self.conv1 = nn.Conv1d(5, 10, 4 ) # bs * 5 * (28)
+        self.conv2 = nn.Conv1d(10, 10, 4) # bs * 10 * (24)
         self.fc1 = nn.Linear(10 * 13, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 5)
@@ -29,7 +93,8 @@ class ConvNet_1_0_0(nn.Module):
         x = self.fc3(x)
         return x
 
-class ConvNet_1_0_1(nn.Module):
+class ConvNet_1_0_1(AbstractMidiNet):
+
     def __init__(self):
         super(ConvNet_1_0_1, self).__init__()
         self.conv1 = nn.Conv1d(5, 10, 4 )
@@ -48,7 +113,8 @@ class ConvNet_1_0_1(nn.Module):
         return x
 
 
-class ConvNet_1_0_2(nn.Module):
+class ConvNet_1_0_2(AbstractMidiNet):
+
     def __init__(self):
         super(ConvNet_1_0_2, self).__init__() # bs * 5 * 32
         self.conv1 = nn.Conv1d(5, 10, 4) # bs * 10 * 28+1
@@ -71,7 +137,8 @@ class ConvNet_1_0_2(nn.Module):
         x = self.fc3(x)
         return x
 
-class ConvNet_1_0_3(nn.Module):
+class ConvNet_1_0_3(AbstractMidiNet):
+
     def __init__(self):
         super(ConvNet_1_0_3, self).__init__() # bs * 5 * 32
         self.conv1 = nn.Conv1d(5, 10, 4) # bs * 10 * 28+1
@@ -98,7 +165,7 @@ class ConvNet_1_0_3(nn.Module):
         x = self.fc3(x)
         return x
 
-class TransformerNet_1_0_0(nn.Module):
+class TransformerNet_1_0_0(AbstractMidiNet):
 
     def __init__(self):
         super(TransformerNet_1_0_0, self).__init__() # bs * 5 * 32
@@ -111,7 +178,7 @@ class TransformerNet_1_0_0(nn.Module):
         x = self.fc0(x)
         return x
 
-class TransformerNet_1_0_1(nn.Module):
+class TransformerNet_1_0_1(AbstractMidiNet):
 
     def __init__(self):
         super(TransformerNet_1_0_1, self).__init__() # bs * 5 * 32
@@ -124,7 +191,7 @@ class TransformerNet_1_0_1(nn.Module):
         x = self.fc0(x)
         return x
 
-class TransformerNet_1_0_2(nn.Module):
+class TransformerNet_1_0_2(AbstractMidiNet):
 
     def __init__(self):
         super(TransformerNet_1_0_2, self).__init__() # bs * 5 * 32

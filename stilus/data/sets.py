@@ -22,9 +22,8 @@ class MidiDataset(Dataset):
         
         self.time_series = torch.from_numpy(np_training_data)
                 
-
     def __len__(self):
         return len(self.time_series)
 
     def __getitem__(self, idx):
-        return self.time_series[idx]
+        return self.time_series[idx,:,0:32], self.time_series[idx,:,32]
