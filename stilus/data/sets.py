@@ -21,7 +21,7 @@ class MidiDataset(Dataset):
         np_training_data = (np_training_data - mean) / std
         
         self.time_series = torch.from_numpy(np_training_data)
-                
+                          
     def __len__(self):
         return len(self.time_series)
 

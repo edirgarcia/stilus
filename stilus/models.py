@@ -21,6 +21,7 @@ class AbstractMidiNet(pl.LightningModule):
     def __init__(self):
         super(AbstractMidiNet, self).__init__()
         # Calls super. Body is implemented in each concrete model class
+        #self.criterion = nn.MSELoss()
         self.criterion = nn.L1Loss()
         self.midi_dataset = MidiDataset("training_data.npy")
         self.midi_test_dataset = MidiDataset("test_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
