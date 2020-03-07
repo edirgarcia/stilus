@@ -26,6 +26,9 @@ class AbstractMidiNet(pl.LightningModule):
         self.midi_dataset = MidiDataset("training_data.npy")
         #self.midi_test_dataset = MidiDataset("test_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
         self.midi_val_dataset = MidiDataset("validation_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
+        #for logging
+        self.total_epochs = 0
+        self.total_batches = 0
 
     def forward(self, x):
         # Is implemented in each concrete model class
@@ -35,8 +38,9 @@ class AbstractMidiNet(pl.LightningModule):
         x, y = batch
         y_hat = self.forward(x)
         loss = self.criterion(y_hat, y)
-        tensorboard_logs = {'train_loss': loss}
-        return {'loss': loss, 'log': tensorboard_logs}
+        self.logger.experiment.add_scalar("training_loss", loss, self.total_batches)
+        self.total_batches += 1
+        return {'loss': loss}
 
     # def test_step(self, batch, batch_idx):
     #     x, y = batch
@@ -56,6 +60,8 @@ class AbstractMidiNet(pl.LightningModule):
     
     def validation_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
+        self.logger.experiment.add_scalar("val_loss", val_loss_mean, self.total_epochs)
+        self.total_epochs += 1
         return {'val_loss': val_loss_mean}
 
     def configure_optimizers(self):
@@ -64,8 +70,8 @@ class AbstractMidiNet(pl.LightningModule):
     def train_dataloader(self):
         return DataLoader(self.midi_dataset, batch_size=128, shuffle=True)
 
-    def test_dataloader(self):
-        return DataLoader(self.midi_test_dataset, batch_size=128, shuffle=True)
+    # def test_dataloader(self):
+    #     return DataLoader(self.midi_test_dataset, batch_size=128, shuffle=True)
 
     def val_dataloader(self):
         return DataLoader(self.midi_val_dataset, batch_size=64, shuffle=False)

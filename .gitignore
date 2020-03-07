@@ -3,4 +3,3 @@
 **/.vscode
 *.npy
 lightning_logs/*
-tb_logs/*
