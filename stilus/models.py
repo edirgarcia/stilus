@@ -24,8 +24,8 @@ class AbstractMidiNet(pl.LightningModule):
         #self.criterion = nn.MSELoss()
         self.criterion = nn.L1Loss()
         self.midi_dataset = MidiDataset("training_data.npy")
-        self.midi_test_dataset = MidiDataset("test_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
-        self.val_test_dataset = MidiDataset("validation_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
+        #self.midi_test_dataset = MidiDataset("test_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
+        self.midi_val_dataset = MidiDataset("validation_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
 
     def forward(self, x):
         # Is implemented in each concrete model class
@@ -35,42 +35,40 @@ class AbstractMidiNet(pl.LightningModule):
         x, y = batch
         y_hat = self.forward(x)
         loss = self.criterion(y_hat, y)
-        return {'loss': loss}
+        tensorboard_logs = {'train_loss': loss}
+        return {'loss': loss, 'log': tensorboard_logs}
 
-    def test_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self.forward(x)
-        loss = self.criterion(y_hat, y)
-        return {'test_loss': loss}
-
-    def test_end(self, outputs):
-        test_loss_mean = torch.stack([x['test_loss'] for x in outputs]).mean()
-        return {'test_loss': test_loss_mean}
-
-    # def validation_step(self, batch, batch_idx):
+    # def test_step(self, batch, batch_idx):
     #     x, y = batch
     #     y_hat = self.forward(x)
     #     loss = self.criterion(y_hat, y)
-    #     return {'val_loss': loss}
+    #     return {'test_loss': loss}
+
+    # def test_end(self, outputs):
+    #     test_loss_mean = torch.stack([x['test_loss'] for x in outputs]).mean()
+    #     return {'test_loss': test_loss_mean}
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = self.criterion(y_hat, y)
+        return {'val_loss': loss}
     
-    # def validation_end(self, outputs):
-    #     val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
-    #     return {'val_loss': val_loss_mean}
+    def validation_end(self, outputs):
+        val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
+        return {'val_loss': val_loss_mean}
 
     def configure_optimizers(self):
         return optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
 
-    @pl.data_loader
     def train_dataloader(self):
         return DataLoader(self.midi_dataset, batch_size=128, shuffle=True)
 
-    @pl.data_loader
     def test_dataloader(self):
         return DataLoader(self.midi_test_dataset, batch_size=128, shuffle=True)
 
-    @pl.data_loader
     def val_dataloader(self):
-        return DataLoader(self.val_test_dataset, batch_size=64, shuffle=False)
+        return DataLoader(self.midi_val_dataset, batch_size=64, shuffle=False)
 
     
 
