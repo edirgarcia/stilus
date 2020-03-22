@@ -27,7 +27,7 @@ for root, dirs, files in os.walk(in_path):
         mid = MidiFile(abs_path)
 
         time_series = convert_midi_to_time_series(mid, 5, 5, 8)
-        training_data = get_training_data(time_series, 33)
+        training_data = get_training_data(time_series, 65)
 
         if result is None :
             result = training_data

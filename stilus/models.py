@@ -16,13 +16,25 @@ def num_flat_features(x):
         num_features *= s
     return num_features
 
+class WeightedL1Loss(nn.Module):
+    def __init__(self):
+        super(WeightedL1Loss, self).__init__()
+        self.internal_loss = nn.L1Loss()
+        self.importance = torch.tensor([[1.0], [1.0], [1.0], [2.0], [5.0]], requires_grad=True)
+        # shape 5 * 1
+        
+    def forward(self, y_hat, y):
+        # y_hat and y are bs * 5
+        x = torch.mul(y_hat, self.importance)
+        return self.internal_loss(x, y)
+
 class AbstractMidiNet(pl.LightningModule):
 
     def __init__(self):
         super(AbstractMidiNet, self).__init__()
         # Calls super. Body is implemented in each concrete model class
         #self.criterion = nn.MSELoss()
-        self.criterion = nn.L1Loss()
+        self.criterion = WeightedL1Loss()
         self.midi_dataset = MidiDataset("training_data.npy")
         #self.midi_test_dataset = MidiDataset("test_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
         self.midi_val_dataset = MidiDataset("validation_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
@@ -82,9 +94,9 @@ class ConvNet_1_0_0(AbstractMidiNet):
 
     def __init__(self):
         super(ConvNet_1_0_0, self).__init__()
-        self.conv1 = nn.Conv1d(5, 10, 4 ) # bs * 5 * (28)
-        self.conv2 = nn.Conv1d(10, 10, 4) # bs * 10 * (24)
-        self.fc1 = nn.Linear(10 * 13, 128)
+        self.conv1 = nn.Conv1d(5, 10, 4 ) # bs * 5 * (60)
+        self.conv2 = nn.Conv1d(10, 10, 4) # bs * 10 * (56)
+        self.fc1 = nn.Linear(10 * 29, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 5)
 
@@ -102,8 +114,8 @@ class ConvNet_1_0_1(AbstractMidiNet):
 
     def __init__(self):
         super(ConvNet_1_0_1, self).__init__()
-        self.conv1 = nn.Conv1d(5, 10, 4 )
-        self.fc1 = nn.Linear(140, 128)
+        self.conv1 = nn.Conv1d(5, 10, 4 ) # bs * 5 * (60)
+        self.fc1 = nn.Linear(300, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 5)
 
@@ -121,9 +133,9 @@ class ConvNet_1_0_1(AbstractMidiNet):
 class ConvNet_1_0_2(AbstractMidiNet):
 
     def __init__(self):
-        super(ConvNet_1_0_2, self).__init__() # bs * 5 * 32
-        self.conv1 = nn.Conv1d(5, 10, 4) # bs * 10 * 28+1
-        self.fc0 = nn.Linear(10*29, 64) # bs * 64
+        super(ConvNet_1_0_2, self).__init__() # bs * 5 * 64
+        self.conv1 = nn.Conv1d(5, 10, 4) # bs * 10 * 60+1
+        self.fc0 = nn.Linear(10*61, 64) # bs * 64
         self.conv2 = nn.Conv1d(1, 10, 4) # bs * 10 * 60
         self.fc1 = nn.Linear(10 * 30, 128)
         self.fc2 = nn.Linear(128, 64)
@@ -146,8 +158,8 @@ class ConvNet_1_0_3(AbstractMidiNet):
 
     def __init__(self):
         super(ConvNet_1_0_3, self).__init__() # bs * 5 * 32
-        self.conv1 = nn.Conv1d(5, 10, 4) # bs * 10 * 28+1
-        self.fc0 = nn.Linear(10*29, 64) # bs * 64
+        self.conv1 = nn.Conv1d(5, 10, 4) # bs * 10 * 60+1
+        self.fc0 = nn.Linear(10*61, 64) # bs * 64
         self.conv2 = nn.Conv1d(1, 10, 4) # bs * 10 * 60
         self.fc1 = nn.Linear(10 * 30, 128)
         self.dr0 = nn.Dropout(.2)
@@ -173,9 +185,9 @@ class ConvNet_1_0_3(AbstractMidiNet):
 class TransformerNet_1_0_0(AbstractMidiNet):
 
     def __init__(self):
-        super(TransformerNet_1_0_0, self).__init__() # bs * 5 * 32
-        self.encoder0 = nn.TransformerEncoderLayer(d_model=32, nhead=8, dim_feedforward=512)
-        self.fc0 = nn.Linear(32 * 5, 5)
+        super(TransformerNet_1_0_0, self).__init__() # bs * 5 * 64
+        self.encoder0 = nn.TransformerEncoderLayer(d_model=64, nhead=8, dim_feedforward=512)
+        self.fc0 = nn.Linear(64 * 5, 5)
 
     def forward(self, x):
         x = self.encoder0(x)
@@ -186,9 +198,9 @@ class TransformerNet_1_0_0(AbstractMidiNet):
 class TransformerNet_1_0_1(AbstractMidiNet):
 
     def __init__(self):
-        super(TransformerNet_1_0_1, self).__init__() # bs * 5 * 32
-        self.encoder0 = nn.TransformerEncoderLayer(d_model=32, nhead=8)
-        self.fc0 = nn.Linear(32 * 5, 5)
+        super(TransformerNet_1_0_1, self).__init__() # bs * 5 * 64
+        self.encoder0 = nn.TransformerEncoderLayer(d_model=64, nhead=8)
+        self.fc0 = nn.Linear(64 * 5, 5)
 
     def forward(self, x):
         x = self.encoder0(x)
@@ -200,9 +212,9 @@ class TransformerNet_1_0_2(AbstractMidiNet):
 
     def __init__(self):
         super(TransformerNet_1_0_2, self).__init__() # bs * 5 * 32
-        self.encoder0 = nn.TransformerEncoderLayer(d_model=32, nhead=8)
+        self.encoder0 = nn.TransformerEncoderLayer(d_model=64, nhead=8)
         self.encoder = nn.TransformerEncoder(self.encoder0, num_layers=3)
-        self.fc0 = nn.Linear(32 * 5, 5)
+        self.fc0 = nn.Linear(64 * 5, 5)
 
     def forward(self, x):
         x = self.encoder(x)
