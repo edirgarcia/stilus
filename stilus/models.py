@@ -20,39 +20,51 @@ class WeightedL1Loss(nn.Module):
     def __init__(self):
         super(WeightedL1Loss, self).__init__()
         self.internal_loss = nn.L1Loss()
-        self.importance = torch.tensor([[1.0], [1.0], [1.0], [2.0], [5.0]], requires_grad=True)
-        # shape 5 * 1
+        self.importance = torch.tensor([[1.0], [1.0], [1.0], [1.0], [1.0]], requires_grad=True)
         
     def forward(self, y_hat, y):
-        # y_hat and y are bs * 5
+        
+        print(y_hat.shape)
+        print(self.importance.shape)
         x = torch.mul(y_hat, self.importance)
+        
         return self.internal_loss(x, y)
+    
 
 class AbstractMidiNet(pl.LightningModule):
 
     def __init__(self):
         super(AbstractMidiNet, self).__init__()
         # Calls super. Body is implemented in each concrete model class
-        #self.criterion = nn.MSELoss()
-        self.criterion = WeightedL1Loss()
-        self.midi_dataset = MidiDataset("training_data.npy")
-        #self.midi_test_dataset = MidiDataset("test_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
-        self.midi_val_dataset = MidiDataset("validation_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
+        self.criterion = nn.MSELoss()
+        #self.criterion = WeightedL1Loss()
         #for logging
         self.total_epochs = 0
         self.total_batches = 0
+        self.data_set = False
 
     def forward(self, x):
         # Is implemented in each concrete model class
         pass
 
     def training_step(self, batch, batch_idx):
+
+        if not self.data_set:
+            raise Exception("Data path has not been set, can't train")
+
         x, y = batch
         y_hat = self.forward(x)
         loss = self.criterion(y_hat, y)
         self.logger.experiment.add_scalar("training_loss", loss, self.total_batches)
         self.total_batches += 1
         return {'loss': loss}
+
+    def set_data_path(self, data_path):
+        self.midi_dataset = MidiDataset(data_path + "/training_data.npy")
+        #self.midi_test_dataset = MidiDataset("test_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
+        self.midi_val_dataset = MidiDataset(data_path + "/validation_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
+        self.name = type(self).__name__ + "_" + data_path.replace("data/", "")
+        self.data_set = True
 
     # def test_step(self, batch, batch_idx):
     #     x, y = batch
@@ -86,7 +98,7 @@ class AbstractMidiNet(pl.LightningModule):
     #     return DataLoader(self.midi_test_dataset, batch_size=128, shuffle=True)
 
     def val_dataloader(self):
-        return DataLoader(self.midi_val_dataset, batch_size=64, shuffle=False)
+        return DataLoader(self.midi_val_dataset, batch_size=128, shuffle=False)
 
     
 
@@ -210,7 +222,7 @@ class TransformerNet_1_0_1(AbstractMidiNet):
 
 class TransformerNet_1_0_2(AbstractMidiNet):
 
-    def __init__(self):
+    def __init__(self,):
         super(TransformerNet_1_0_2, self).__init__() # bs * 5 * 32
         self.encoder0 = nn.TransformerEncoderLayer(d_model=64, nhead=8)
         self.encoder = nn.TransformerEncoder(self.encoder0, num_layers=3)
