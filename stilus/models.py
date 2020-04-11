@@ -19,20 +19,23 @@ def num_flat_features(x):
 class WeightedL1Loss(nn.Module):
     def __init__(self):
         super(WeightedL1Loss, self).__init__()
-        self.internal_loss = nn.L1Loss()
+        self.internal_loss = nn.MSELoss()
 
         cuda0 = torch.device('cuda:0')
 
-        self.importance = torch.tensor([[1.0], [1.0], [1.0], [1.0], [1.0]], requires_grad=True, device=cuda0 )
+        self.importance = torch.tensor([1.0, 1.0, 1.0, 2.0, 5.0], requires_grad=True, device=cuda0 )
         
     def forward(self, y_hat, y):
         
         #print("y_hat->",y_hat.shape)
         #print("importance->",self.importance.shape)
-        x = y_hat * self.importance[:, None].T
-        #print("x->",x.shape)
+        internal = self.importance[:, None]
+        #print("internal->", internal.shape)
+        #print("internal->", internal)
+        x = y_hat * internal
+        #print("x->",x)
         
-        return self.internal_loss(x[0], y)
+        return self.internal_loss(x, y)
     
 
 class AbstractMidiNet(pl.LightningModule):
