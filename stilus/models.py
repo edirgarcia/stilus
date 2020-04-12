@@ -29,11 +29,8 @@ class WeightedL1Loss(nn.Module):
         
         #print("y_hat->",y_hat.shape)
         #print("importance->",self.importance.shape)
-        internal = self.importance[:, None]
-        #print("internal->", internal.shape)
-        #print("internal->", internal)
-        x = y_hat * internal
-        #print("x->",x)
+        x = y_hat * self.importance
+        #print("x->",x.shape)
         
         return self.internal_loss(x, y)
     
