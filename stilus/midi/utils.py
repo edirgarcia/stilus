@@ -1,7 +1,7 @@
 import random
 import math
 import numpy as np
-from mido import Message, MidiFile, MidiTrack
+from mido import Message, MidiFile, MidiTrack, MetaMessage
 
 def get_total_beats(mid):
     max_ticks = 0
@@ -85,6 +85,37 @@ def convert_midi_to_time_series(mid, max_sim_notes, max_sim_notes_per_track, max
     #print(tensor.shape)
     all_tracks = np.concatenate(tensor[:], axis=1)
     return  all_tracks
+
+### params 
+### series - is a numpy array representing the song, or the ouput of a net, or the convert_midi_to_time_series method
+### midi_program - is the numerical value that corresponds to the desired instument, look at https://soundprogramming.net/file-formats/general-midi-instrument-list/
+### output_path - where in file system to write the resulting midi
+def write_midi_from_series(series, midi_program, output_path):
+    outfile = MidiFile()
+
+    step_size = int(outfile.ticks_per_beat / 8)
+    
+    track = MidiTrack()
+    outfile.tracks.append(track)
+
+    track.append(Message('program_change', program=midi_program))
+
+    delta = 0
+    
+    for i in range(len(series[0])):
+        for j in range(len(series)):
+            note = series[j,i]
+            if note > 20: # this is to prevent low signals from filtering in
+                #print(note)
+                track.append(Message('note_on', note=note, velocity=100, time=delta))
+                delta = 0
+
+        delta = delta + step_size
+
+    track.append( MetaMessage('end_of_track'))
+    
+    print("Creating midi file: ", output_path, " from series")
+    outfile.save(output_path)
 
 ### Generates records of size record_size, from the complete timeseries of a midi
 def get_training_data(time_series, record_size):
