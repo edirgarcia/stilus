@@ -1,22 +1,22 @@
 from midi.utils import convert_midi_to_time_series, get_training_data 
 from mido import Message, MidiFile, MidiTrack
 from sklearn.model_selection import train_test_split
-from sys import argv
+import argparse
 import os
 import numpy as np
 
-# <your_path>\Source\Repos\stilus> python stilus/generate_training_data.py midi/test/ 
-#                                  python stilus/generate_training_data.py midi/training/ bach
+# <your_path>\Source\Repos\stilus> python stilus/generate_training_data.py -i midi/training/ -c bach
 
-if len(argv) != 3:
-    raise ValueError("This script must have 2 parameters script name, inputRootPath, composer")
+parser = argparse.ArgumentParser(description="Generate training data from a given folder of midi")
+parser.add_argument("-i","--inputRootPath", help="The root path for the input")
+parser.add_argument("-c","--composer", help="The path to the input from inputRoot, this will be used to name the output data folder")
 
+args = parser.parse_args()
 
 print("Generating training data...")
 
-script_name, in_path, composer = argv
-# in_path = "../midi/training/"
-# out_path = "../training_data"
+in_path = args.inputRootPath
+composer = args.composer
 
 result = None
 

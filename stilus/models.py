@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import pytorch_lightning as pl
 
-from stilus.data.sets import MidiDataset
+from data.sets import MidiDataset
 from torch.utils.data import DataLoader
 
 

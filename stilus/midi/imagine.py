@@ -25,7 +25,7 @@ def imagine_midi(time_series, net, windows) :
     std_time_series = int_to_std_tensor(time_series, net)
     
     series_len = len(std_time_series[0])
-    print(series_len)
+    #print(series_len)
     
     for win in windows:
         tokens = win.split(":")
