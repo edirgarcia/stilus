@@ -127,3 +127,32 @@ def get_training_data(time_series, record_size):
         result[idx] = time_series[:,idx:idx+record_size]
         idx = idx + 1
     return result
+
+### Generates records of size record_size, from the complete timeseries of a midi the target is sparse
+def get_sparse_training_data(time_series, record_size):
+
+    nb_classes = 256
+    time_series_height = time_series.shape[0]
+    time_series_len = time_series.shape[1]
+
+    result_training = np.zeros((time_series_len +1 - record_size, time_series_height, record_size))
+    result_labels = np.zeros((time_series_len +1 - record_size , time_series_height * nb_classes))
+    #print(result_training.shape)
+    idx = 0
+    
+    #while idx < 10:
+    while idx <= time_series_len - record_size -1:
+        result_training[idx] = time_series[:,idx:idx+record_size]
+        #print(idx)
+        #print(result_training[idx])
+        internal_label = time_series[:,idx+record_size].astype(int) # shape (5,)
+        #print(internal_label)
+        targets = internal_label.reshape(-1)
+        one_hot_targets = np.eye(nb_classes)[targets] # shape (5,256)
+        flat_encodings = one_hot_targets.reshape(time_series_height * nb_classes)
+
+        result_labels[idx] = flat_encodings
+
+        idx = idx + 1
+
+    return result_training, result_labels

@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import pytorch_lightning as pl
 
-from data.sets import MidiDataset
+from stilus.data.sets import MidiDataset
 from torch.utils.data import DataLoader
 
 
@@ -34,13 +34,26 @@ class WeightedL1Loss(nn.Module):
         
         return self.internal_loss(x, y)
     
+class CustomL1Loss(nn.Module):
+    def __init__(self):
+        super(CustomL1Loss, self).__init__()
+        self.internal_loss = nn.L1Loss()
+        
+    def forward(self, y_hat, y):
+        
+        x = self.internal_loss(y_hat, y) * (torch.sum(y) + 1)
+        #print("x->",x.shape)
+        
+        return x
+
 
 class AbstractMidiNet(pl.LightningModule):
 
     def __init__(self):
         super(AbstractMidiNet, self).__init__()
         # Calls super. Body is implemented in each concrete model class
-        self.criterion = nn.MSELoss()
+        #self.criterion = nn.MultiLabelSoftMarginLoss(reduction="sum")
+        self.criterion = CustomL1Loss()
         #self.criterion = WeightedL1Loss()
         #for logging
         self.total_epochs = 0
@@ -64,9 +77,9 @@ class AbstractMidiNet(pl.LightningModule):
         return {'loss': loss}
 
     def set_data_path(self, data_path):
-        self.midi_dataset = MidiDataset(data_path + "/training_data.npy")
+        self.midi_dataset = MidiDataset(data_path + "/training_data.npy", data_path + "/training_labels.npy" )
         #self.midi_test_dataset = MidiDataset("test_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
-        self.midi_val_dataset = MidiDataset(data_path + "/validation_data.npy", self.midi_dataset.mean, self.midi_dataset.std)
+        self.midi_val_dataset = MidiDataset(data_path + "/validation_data.npy", data_path + "/validation_labels.npy")
         self.name = type(self).__name__ + "_" + data_path.replace("data/", "")
         self.data_set = True
 
@@ -114,7 +127,7 @@ class ConvNet_1_0_0(AbstractMidiNet):
         self.conv2 = nn.Conv1d(10, 10, 4) # bs * 10 * (56)
         self.fc1 = nn.Linear(10 * 29, 128)
         self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 5)
+        self.fc3 = nn.Linear(64, 5 * 256)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))

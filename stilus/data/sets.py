@@ -4,26 +4,21 @@ from torch.utils.data import Dataset, DataLoader
 
 class MidiDataset(Dataset):
 
-    def __init__(self, npy_file, mean=None, std=None):
+    def __init__(self, npy_training_file, npy_labels_file):
         """
         Args:
-            npy_file (string): Path to the npy file with the midi time series.
+            npy_training_file (string): Path to the npy file with the training midi time series.
+            npy_labels_file (string): Path to the npy file with the labels to the corresponding training file
         """
-        np_training_data = np.load(npy_file).astype('float32')
-        if mean == None:
-            mean = np.mean(np_training_data)
-        if std == None:
-            std = np.std(np_training_data)
-            
-        self.mean = mean
-        self.std = std
-        #standarize
-        np_training_data = (np_training_data - mean) / std
+        np_training_data = np.load(npy_training_file).astype('float32')
+        np_labels_data = np.load(npy_labels_file).astype('float32')
+
         
-        self.time_series = torch.from_numpy(np_training_data)
+        self.training_data = torch.from_numpy(np_training_data)
+        self.labels_data = torch.from_numpy(np_labels_data)
                           
     def __len__(self):
-        return len(self.time_series)
+        return len(self.training_data)
 
     def __getitem__(self, idx):
-        return self.time_series[idx,:,0:64], self.time_series[idx,:,64]
+        return self.training_data[idx,:,:], self.labels_data[idx,:]
