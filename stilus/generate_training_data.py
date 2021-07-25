@@ -1,4 +1,4 @@
-from midi.utils import convert_midi_to_time_series, get_sparse_training_data 
+from midi.utils import convert_midi_to_time_series, get_sparse_training_data, convert_midi_to_string 
 from mido import Message, MidiFile, MidiTrack
 from sklearn.model_selection import train_test_split
 import argparse
@@ -9,8 +9,8 @@ import pandas as pd
 # <your_path>\Source\Repos\stilus> python stilus/generate_training_data.py -i midi/training/ -c bach
 
 parser = argparse.ArgumentParser(description="Generate training data from a given folder of midi")
-parser.add_argument("-i","--inputRootPath", help="The root path for the input")
-parser.add_argument("-c","--composer", help="The path to the input from inputRoot, this will be used to name the output data folder")
+parser.add_argument("-i","--inputRootPath", default="midi/training/", help="The root path for the input", )
+parser.add_argument("-c","--composer", default="bach", help="The path to the input from inputRoot, this will be used to name the output data folder")
 
 args = parser.parse_args()
 
@@ -28,7 +28,8 @@ for root, dirs, files in os.walk(in_path+composer+"/"):
         print("processing file: ", abs_path)
         mid = MidiFile(abs_path)
 
-        time_series = convert_midi_to_time_series(mid, 5, 5, 8)
+        #time_series = convert_midi_to_time_series(mid, 5, 5, 8)
+        time_series = convert_midi_to_string(mid, 5, 8)
 
         training_data, training_labels = get_sparse_training_data(time_series, 64)
 

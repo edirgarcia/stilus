@@ -22,7 +22,7 @@ def get_total_beats(mid):
 ### params #mid is is the midi file, 
 ### max_sim_notes is the maximum amount of simultaneous notes on a track, as of now most pieces have at most 4
 ### max_granularity is what is the minumum space that you can represent
-### 1 is crotchets/quarters, 2 is quavers, 4 is semiquavers, etc. 4,or 8 is is a good default
+### 1 is crotchets/quarters, 2 is quavers, 4 is semiquavers, etc. 4, or 8 is is a good default
 
 ### returns, tensor - the tensor that processed the whole midi only on the tracks that have note_on events
 def convert_midi_to_tensor(mid, max_sim_notes, max_granularity):
@@ -55,6 +55,37 @@ def convert_midi_to_tensor(mid, max_sim_notes, max_granularity):
                 note_on_dims.append(i)
     #print ("time series shape:", tensor.shape)
     return tensor[note_on_dims]
+
+    
+### returns, string - the string that processed the whole midi only on the tracks that have note_on events
+def convert_midi_to_string(mid, max_sim_notes, max_granularity):
+    total_beats = get_total_beats(mid)
+    string_result = ["0-"] * (total_beats * max_granularity)
+    note_on_dims = []
+    for i, track in enumerate(mid.tracks):
+            total_ticks = 0
+            #print('Track {}: {}'.format(i, track.name))
+            note_on_in_track = False
+            internal_token = ""
+            total_ticks = 0
+            for msg in track:
+                if msg.type == "note_on" :
+                    note_on_in_track = True
+                    if msg.velocity > 0 :
+                        #print(total_ticks * max_granularity / mid.ticks_per_beat)
+                        curr_index = round(total_ticks * max_granularity / mid.ticks_per_beat)
+                        #print(curr_index)
+                        if string_result[curr_index] == "0-" :
+                            # if the string at current token is empty
+                            internal_token = str(msg.note) + "-"
+                        else:
+                            # can we sort them as we add them? #that'd be nice!
+                            internal_token = string_result[curr_index] + str(msg.note) + "-"
+
+                        string_result[curr_index] = internal_token
+                    #increament the total ticks regardless there was a played note or not (velocity>0)
+                    total_ticks = total_ticks + msg.time               
+    return " ".join(string_result)
 
 def delete_all_note_on(mid):
     for i, track in enumerate(mid.tracks):
